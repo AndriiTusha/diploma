@@ -4,7 +4,7 @@ import clientsController from "../controllers/clientsController.js";
 
 router.post('/createClient', clientsController.createClient)
 router.get('/getOneClient/:clientID', clientsController.getOneClient)
-router.get('/editClient/:clientID', clientsController.editClient)
+router.put('/editClient/:clientID', clientsController.editClient)
 router.get('/getAllClients', clientsController.getAllClients)
 
 
