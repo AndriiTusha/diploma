@@ -13,5 +13,3 @@ router.use('/payments', paymentsRoute);
 router.use('/services', servicesRoute);
 
 export default router;
-
-

@@ -1,4 +1,4 @@
-import {DiagnosticsRecord, Vehicle} from '../models/models.js';
+import {DiagnosticsRecord, Vehicle, Client} from '../models/models.js';
 import ApiError from "../error/ApiError.js";
 
 class DiagnosticsController {
@@ -7,17 +7,41 @@ class DiagnosticsController {
         try {
             const { vehicle_id, appointment_datetime, description } = req.body;
 
-            if (!vehicle_id || !appointment_datetime) {
-                return next(ApiError.badRequest('All diagnostic fields are required'));
+            // Перевірка наявності автомобіля
+            const vehicle = await Vehicle.findByPk(vehicle_id, {
+                include: [{ model: Client, attributes: ['id', 'name', 'surname'] }],
+            });
+
+            if (!vehicle) {
+                return next(ApiError.badRequest('Vehicle not found'));
             }
 
-            const newDiagnostics = await DiagnosticsRecord.create({ vehicle_id, appointment_datetime, description });
+            const client = vehicle.client;
+            if (!client) {
+                return next(ApiError.badRequest('Vehicle is not linked to any client'));
+            }
 
-            return res.status(201).json(newDiagnostics);
+            // Створення запису діагностики з client_id
+            const newDiagnostics = await DiagnosticsRecord.create({
+                vehicle_id: vehicle.id,
+                client_id: client.id, // Додаємо client_id
+                appointment_datetime,
+                description,
+            });
+
+            // Формування відповіді
+            const response = {
+                ...newDiagnostics.toJSON(),
+                client: { id: client.id, name: client.name, surname: client.surname },
+            };
+
+            return res.status(201).json(response);
         } catch (error) {
-            next(ApiError.internalError('Failed to create diagnostic record'));
+            next(ApiError.internalError('Failed to create diagnostics record'));
         }
     }
+
+
 
     // Отримання всіх записів по діагностиці для конкретного автомобіля
     async getDiagnosticsByVehicle(req, res, next) {
