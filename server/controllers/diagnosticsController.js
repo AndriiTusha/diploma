@@ -41,8 +41,6 @@ class DiagnosticsController {
         }
     }
 
-
-
     // Отримання всіх записів по діагностиці для конкретного автомобіля
     async getDiagnosticsByVehicle(req, res, next) {
         try {

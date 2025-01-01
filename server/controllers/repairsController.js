@@ -1,4 +1,4 @@
-import {RepairRecord, Vehicle} from '../models/models.js';
+import { RepairRecord, Vehicle, Client } from '../models/models.js';
 import ApiError from "../error/ApiError.js";
 
 class RepairsController {
@@ -11,13 +11,38 @@ class RepairsController {
                 return next(ApiError.badRequest('All repair fields are required'));
             }
 
-            const newRepair = await RepairRecord.create({ vehicle_id, appointment_datetime, repair_description });
+            // Перевірка наявності автомобіля
+            const vehicle = await Vehicle.findByPk(vehicle_id, {
+                include: [{ model: Client, attributes: ['id', 'name', 'surname'] }],
+            });
 
-            return res.status(201).json(newRepair);
+            if (!vehicle) {
+                return next(ApiError.badRequest('Vehicle with the provided ID not found'));
+            }
+
+            const client = vehicle.client;
+            if (!client) {
+                return next(ApiError.badRequest('Vehicle is not linked to any client'));
+            }
+
+            // Створення запису про ремонт із `client_id`
+            const newRepair = await RepairRecord.create({
+                vehicle_id: vehicle.id,
+                client_id: client.id, // Зберігаємо client_id
+                appointment_datetime,
+                repair_description,
+            });
+
+            return res.status(201).json({
+                ...newRepair.toJSON(),
+                client: { id: client.id, name: client.name, surname: client.surname },
+            });
         } catch (error) {
+            console.error('Error creating repair record:', error.message);
             next(ApiError.internalError('Failed to create repair record'));
         }
     }
+
 
     // Отримання всіх записів про ремонт для конкретного автомобіля
     async getRepairsByVehicle(req, res, next) {
@@ -32,6 +57,7 @@ class RepairsController {
 
             return res.status(200).json(repairs);
         } catch (error) {
+            console.error('Error fetching repairs by vehicle:', error.message);
             next(ApiError.internalError('Failed to fetch repairs'));
         }
     }
@@ -56,6 +82,7 @@ class RepairsController {
 
             return res.status(200).json(repairs);
         } catch (error) {
+            console.error('Error fetching repairs by client:', error.message);
             next(ApiError.internalError('Failed to fetch repairs for client'));
         }
     }
