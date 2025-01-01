@@ -43,6 +43,40 @@ class RepairsController {
         }
     }
 
+    // Редагування запису про ремонт
+    async editRepair(req, res, next) {
+        try {
+            const { repairId } = req.params; // ID запису ремонту
+            const { appointment_datetime, repair_description } = req.body;
+
+            console.log(`Updating repair with ID: ${repairId}`);
+            console.log('Request body:', req.body);
+
+            // Знаходимо запис у базі
+            const repair = await RepairRecord.findByPk(repairId);
+
+            if (!repair) {
+                console.error(`Repair with ID ${repairId} not found`);
+                return next(ApiError.badRequest('Repair record not found'));
+            }
+
+            console.log('Repair record found:', repair);
+
+            // Оновлення полів запису
+            await repair.update({
+                ...(appointment_datetime && { appointment_datetime }),
+                ...(repair_description && { repair_description }),
+            });
+
+            console.log('Updated repair record:', repair);
+
+            return res.status(200).json(repair); // Повертаємо оновлений запис
+        } catch (error) {
+            console.error('Error updating repair record:', error.message);
+            next(ApiError.internalError('Failed to update repair record'));
+        }
+    }
+
 
     // Отримання всіх записів про ремонт для конкретного автомобіля
     async getRepairsByVehicle(req, res, next) {

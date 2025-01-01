@@ -34,6 +34,35 @@ class VehiclesController {
         }
     }
 
+    async editVehicle(req, res, next) {
+        try {
+            const { vehicleID } = req.params; // Отримуємо ID автомобіля з параметрів запиту
+            const { vin, mark, model, year, miles, diagnostics_history, repair_history, maintenance_history } = req.body;
+
+            const vehicle = await Vehicle.findByPk(vehicleID); // Знаходимо автомобіль у базі
+
+            if (!vehicle) {
+                return next(ApiError.badRequest('Vehicle not found'));
+            }
+
+            // Оновлення полів автомобіля
+            await vehicle.update({
+                ...(vin && { vin }),
+                ...(mark && { mark }),
+                ...(model && { model }),
+                ...(year && { year }),
+                ...(miles && { miles }),
+                ...(diagnostics_history && { diagnostics_history }),
+                ...(repair_history && { repair_history }),
+                ...(maintenance_history && { maintenance_history }),
+            });
+
+            return res.status(200).json(vehicle); // Повертаємо оновлений автомобіль
+        } catch (error) {
+            next(ApiError.internalError('Failed to update vehicle'));
+        }
+    }
+
     async getAllVehicles (req, res) {
         const vehicles = await Vehicle.findAll()
         return res.json(vehicles)

@@ -7,7 +7,6 @@ router.get('/getOneClient/:clientID', clientsController.getOneClient)
 router.put('/editClient/:clientID', clientsController.editClient)
 router.get('/getAllClients', clientsController.getAllClients)
 
-
 export default router;
 
 

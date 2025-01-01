@@ -41,6 +41,41 @@ class DiagnosticsController {
         }
     }
 
+    // Редагування запису про діагностику
+    async editDiagnostics(req, res, next) {
+        try {
+            const { diagnosticsId } = req.params; // ID запису діагностики
+            const { appointment_datetime, description } = req.body;
+
+            console.log(`Updating diagnostics with ID: ${diagnosticsId}`);
+            console.log('Request body:', req.body);
+
+            // Знаходимо запис у базі
+            const diagnostics = await DiagnosticsRecord.findByPk(diagnosticsId);
+
+            if (!diagnostics) {
+                console.error(`Diagnostics with ID ${diagnosticsId} not found`);
+                return next(ApiError.badRequest('Diagnostics record not found'));
+            }
+
+            console.log('Diagnostics record found:', diagnostics);
+
+            // Оновлення полів запису
+            await diagnostics.update({
+                ...(appointment_datetime && { appointment_datetime }),
+                ...(description && { description }),
+            });
+
+            console.log('Updated diagnostics record:', diagnostics);
+
+            return res.status(200).json(diagnostics); // Повертаємо оновлений запис
+        } catch (error) {
+            console.error('Error updating diagnostics record:', error.message);
+            next(ApiError.internalError('Failed to update diagnostics record'));
+        }
+    }
+
+
     // Отримання всіх записів по діагностиці для конкретного автомобіля
     async getDiagnosticsByVehicle(req, res, next) {
         try {

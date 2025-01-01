@@ -42,6 +42,40 @@ class MaintenanceController {
         }
     }
 
+    // Редагування запису про обслуговування
+    async editMaintenance(req, res, next) {
+        try {
+            const { maintenanceId } = req.params; // ID запису технічного обслуговування
+            const { appointment_datetime, maintenance_description } = req.body;
+
+            console.log(`Updating maintenance with ID: ${maintenanceId}`);
+            console.log('Request body:', req.body);
+
+            // Знаходимо запис у базі
+            const maintenance = await MaintenanceRecord.findByPk(maintenanceId);
+
+            if (!maintenance) {
+                console.error(`Maintenance with ID ${maintenanceId} not found`);
+                return next(ApiError.badRequest('Maintenance record not found'));
+            }
+
+            console.log('Maintenance record found:', maintenance);
+
+            // Оновлення полів запису
+            await maintenance.update({
+                ...(appointment_datetime && { appointment_datetime }),
+                ...(maintenance_description && { maintenance_description }),
+            });
+
+            console.log('Updated maintenance record:', maintenance);
+
+            return res.status(200).json(maintenance); // Повертаємо оновлений запис
+        } catch (error) {
+            console.error('Error updating maintenance record:', error.message);
+            next(ApiError.internalError('Failed to update maintenance record'));
+        }
+    }
+
 
     // Отримання всіх записів про технічне обслуговування для конкретного автомобіля
     async getMaintenanceByVehicle(req, res, next) {
@@ -71,7 +105,6 @@ class MaintenanceController {
             next(ApiError.internalError('Failed to fetch maintenance'));
         }
     }
-
 
     // Отримання всіх записів про технічне обслуговування для конкретного клієнта
     async getMaintenanceByClient(req, res, next) {
