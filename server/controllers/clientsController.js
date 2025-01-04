@@ -82,9 +82,31 @@ class ClientsController {
     }
 
     // Отримання всіх клієнтів
-    async getAllClients(req, res) {
-        const clients = await Client.findAll({ order: [['id', 'ASC']] });
-        return res.status(200).json(clients);
+    async getAllClients(req, res, next) {
+        try {
+            const limit = parseInt(req.query.limit, 10) || 10; // Кількість записів на сторінку, за замовчуванням 10
+            const page = parseInt(req.query.page, 10) || 1; // Номер сторінки, за замовчуванням 1
+            const offset = (page - 1) * limit; // Розрахунок зсуву
+
+            // Отримання клієнтів із пагінацією
+            const clients = await Client.findAndCountAll({
+                limit: limit, // Обмеження записів
+                offset: offset, // Зсув
+                order: [['id', 'ASC']], // Сортування за ID у зростаючому порядку
+            });
+
+            // Формування відповіді
+            const response = {
+                totalItems: clients.count,
+                totalPages: Math.ceil(clients.count / limit),
+                currentPage: page,
+                data: clients.rows,
+            };
+
+            return res.status(200).json(response);
+        } catch (error) {
+            next(ApiError.internalError('Failed to fetch clients with pagination'));
+        }
     }
 }
 

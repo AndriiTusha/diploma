@@ -1,11 +1,19 @@
 import { Router } from 'express';
-const router = Router();
-import usersController from "../controllers/usersController.js";
+import usersController from '../controllers/usersController.js';
+import { authMiddleware } from '../middleware/auth.js';
 
-router.post('/registration', usersController.registration)
-router.get('/login', usersController.login)
-router.get('/auth', usersController.check)
+const router = Router();
+
+// Маршрут для реєстрації
+router.post('/register', usersController.registration);
+
+// Маршрут для логіну
+router.post('/login', usersController.login);
+
+// Перевірка автентифікації
+router.get('/check', authMiddleware, usersController.check);
 
 export default router;
+
 
 

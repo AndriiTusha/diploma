@@ -1,11 +1,48 @@
 import {Vehicle} from '../models/models.js'
 import ApiError from "../error/ApiError.js";
+import { v4 as uuidv4 } from "uuid";
+import { fileURLToPath } from "url";
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class VehiclesController {
-    async createVehicle (req, res) {
-        const { vin, mark ,model, year, miles, diagnostics_history, repair_history, maintenance_history } = req.body;
-        const vehicle = await Vehicle.create({vin, mark ,model, year, miles, diagnostics_history, repair_history, maintenance_history})
-        return res.json(vehicle)
+    async createVehicle(req, res, next) {
+        try {
+            const { vin, mark, model, year, miles, diagnostics_history, repair_history, maintenance_history, client_id } = req.body;
+
+            if (!req.files || !req.files.img) {
+                return next(ApiError.badRequest("Image file is required"));
+            }
+
+            const { img } = req.files;
+
+            if (!img.mimetype.startsWith("image/")) {
+                return next(ApiError.badRequest("Invalid file type. Only image files are allowed."));
+            }
+
+            let fileName = uuidv4() + path.extname(img.name);
+            const uploadPath = path.resolve(__dirname, "../uploads/vehicles");
+
+            await img.mv(path.join(uploadPath, fileName));
+
+            const vehicle = await Vehicle.create({
+                vin,
+                mark,
+                model,
+                year,
+                miles,
+                diagnostics_history,
+                repair_history,
+                maintenance_history,
+                client_id,
+                img: `uploads/vehicles/${fileName}`,
+            });
+
+            return res.json(vehicle);
+        } catch (e) {
+            next(ApiError.badRequest(e.message));
+        }
     }
     async getAllVehiclesForClient(req, res, next) {
         try {
@@ -63,9 +100,30 @@ class VehiclesController {
         }
     }
 
-    async getAllVehicles (req, res) {
-        const vehicles = await Vehicle.findAll()
-        return res.json(vehicles)
+    async getAllVehicles(req, res, next) {
+        try {
+            const limit = parseInt(req.query.limit, 10) || 10; // За замовчуванням 10 записів на сторінку
+            const page = parseInt(req.query.page, 10) || 1; // За замовчуванням перша сторінка
+            const offset = (page - 1) * limit; // Розрахунок зсуву
+
+            // Отримання списку автомобілів
+            const vehicles = await Vehicle.findAndCountAll({
+                limit: limit, // Явно передаємо як число
+                offset: offset, // Явно передаємо як число
+            });
+
+            // Формуємо відповідь
+            const response = {
+                totalItems: vehicles.count,
+                totalPages: Math.ceil(vehicles.count / limit),
+                currentPage: page,
+                data: vehicles.rows,
+            };
+
+            return res.status(200).json(response);
+        } catch (error) {
+            next(ApiError.internalError('Failed to fetch vehicles with pagination'));
+        }
     }
 }
 

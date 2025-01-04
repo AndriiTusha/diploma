@@ -1,0 +1,7 @@
+# Відкинути папку node_modules
+node_modules/
+
+# Відкинути файли логів
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
