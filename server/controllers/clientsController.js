@@ -1,6 +1,5 @@
 import { Client } from '../models/models.js';
 import ApiError from "../error/ApiError.js";
-import {Op} from "sequelize";
 
 class ClientsController {
     // Створення нового клієнта
@@ -8,26 +7,35 @@ class ClientsController {
         try {
             const { name, middle_name, surname, contact_email, contact_phone, service_history, reminders } = req.body;
 
-            if (!name || !middle_name || !surname || !contact_email || !contact_phone) {
-                return next(ApiError.badRequest('All client fields are required'));
+            if (!name || !surname || !contact_email || !contact_phone) {
+                return next(ApiError.badRequest('All required fields must be filled'));
             }
 
-            // Перевірка наявності клієнта з таким email або телефоном
-            const existingClient = await Client.findOne({
-                where: {
-                    [Op.or]: [{ contact_email }, { contact_phone }],
-                },
-            });
-
+            // Перевірка унікальності контактного email і телефону
+            const existingClient = await Client.findOne({ where: { contact_email } });
             if (existingClient) {
-                return next(ApiError.badRequest('Client with this email or phone number already exists'));
+                return next(ApiError.badRequest('Client with this contact email already exists'));
+            }
+
+            const existingPhone = await Client.findOne({ where: { contact_phone } });
+            if (existingPhone) {
+                return next(ApiError.badRequest('Client with this contact phone already exists'));
             }
 
             // Створення клієнта
-            const newClient = await Client.create({ name, middle_name, surname, contact_email, contact_phone, service_history, reminders });
-            return res.status(201).json(newClient);
+            const client = await Client.create({
+                name,
+                middle_name,
+                surname,
+                contact_email,
+                contact_phone,
+                service_history,
+                reminders,
+            });
+
+            return res.status(201).json(client);
         } catch (error) {
-            next(ApiError.internalError('Failed to create client'));
+            return next(ApiError.internalError(error.message));
         }
     }
 
@@ -35,16 +43,28 @@ class ClientsController {
     async getOneClient(req, res, next) {
         try {
             const { clientID } = req.params;
+            const userRole = req.user.role; // Роль із токена
+            const userEmail = req.user.email; // Email із токена
+
+            // Отримання клієнта за ID
             const client = await Client.findByPk(clientID);
 
             if (!client) {
                 return next(ApiError.badRequest('Client not found'));
             }
+
+            // Якщо роль Client, перевіряємо, чи збігається email
+            if (userRole === 'Client' && client.contact_email !== userEmail) {
+                return next(ApiError.forbidden('Access denied'));
+            }
+
+            // Якщо роль Admin або Employee, повертаємо клієнта
             return res.status(200).json(client);
         } catch (error) {
             next(ApiError.internalError('Failed to fetch client'));
         }
     }
+
 
     // Оновлення даних клієнта
     async editClient(req, res, next) {
@@ -84,18 +104,23 @@ class ClientsController {
     // Отримання всіх клієнтів
     async getAllClients(req, res, next) {
         try {
-            const limit = parseInt(req.query.limit, 10) || 10; // Кількість записів на сторінку, за замовчуванням 10
-            const page = parseInt(req.query.page, 10) || 1; // Номер сторінки, за замовчуванням 1
-            const offset = (page - 1) * limit; // Розрахунок зсуву
+            const userRole = req.user.role;
 
-            // Отримання клієнтів із пагінацією
+            // Перевірка ролі
+            if (userRole !== 'Admin' && userRole !== 'Employee') {
+                return next(ApiError.forbidden('Access denied'));
+            }
+
+            const limit = parseInt(req.query.limit, 10) || 10;
+            const page = parseInt(req.query.page, 10) || 1;
+            const offset = (page - 1) * limit;
+
             const clients = await Client.findAndCountAll({
-                limit: limit, // Обмеження записів
-                offset: offset, // Зсув
-                order: [['id', 'ASC']], // Сортування за ID у зростаючому порядку
+                limit: limit,
+                offset: offset,
+                order: [['id', 'ASC']],
             });
 
-            // Формування відповіді
             const response = {
                 totalItems: clients.count,
                 totalPages: Math.ceil(clients.count / limit),
