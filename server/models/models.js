@@ -7,6 +7,10 @@ export const User = sequelize.define('user', {
     email: { type: DataTypes.STRING, unique: true, allowNull: false },
     password: { type: DataTypes.STRING, allowNull: false },
     role: { type: DataTypes.STRING, defaultValue: 'Client' },
+    verification_code: { type: DataTypes.STRING, allowNull: true },
+    code_expiry: { type: DataTypes.DATE, allowNull: true },
+    is_verified: { type: DataTypes.BOOLEAN, defaultValue: false },
+    verification_attempts: { type: DataTypes.INTEGER, defaultValue: 0}
 });
 
 // Модель клієнтів

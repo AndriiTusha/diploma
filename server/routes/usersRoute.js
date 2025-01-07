@@ -7,6 +7,9 @@ const router = Router();
 // Маршрут для реєстрації
 router.post('/register', usersController.registration);
 
+// Підтвердження реєстрації
+router.post('/verify', usersController.verifyUser);
+
 // Маршрут для логіну
 router.post('/login', usersController.login);
 
