@@ -12,7 +12,7 @@ export const sendPasswordReminderEmail = async (email, newPassword) => {
     });
 
     const mailOptions = {
-        from: `"AutoService" <${process.env.SERVER_EMAIL}>`,
+        from: `"AutoService Support Team" <${process.env.SERVER_EMAIL}>`,
         to: email,
         subject: 'Відновлення пароля',
         text: `Ваш новий пароль: ${newPassword}. Рекомендуємо змінити цей пароль після входу в систему.`,

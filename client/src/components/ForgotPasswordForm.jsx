@@ -6,7 +6,6 @@ const ForgotPasswordForm = () => {
     const [email, setEmail] = useState("");
     const [vin, setVin] = useState("");
     const [isEmailValid, setIsEmailValid] = useState(false);
-    const [isVinValid, setIsVinValid] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const navigate = useNavigate(); // Хук для навігації
 
@@ -18,23 +17,28 @@ const ForgotPasswordForm = () => {
         setEmail(value);
     };
 
-    // Валідація VIN коду
-    const validateVin = (value) => {
-        const vinPattern = /^[A-HJ-NPR-Z0-9]{11}[0-9]{6}$/; // 17 символів, останні 6 — цифри
-        const isValid = vinPattern.test(value);
-        setIsVinValid(isValid);
-        setVin(value);
-    };
-
     // Обробка форми
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isEmailValid && isVinValid) {
-            alert("Пароль надіслано на ваш email!");
-        } else {
-            setErrorMessage("Перевірте введені дані.");
+        try {
+            const response = await fetch('http://localhost:5000/api/users/remind-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, vin }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert('Новий пароль надіслано на вашу електронну пошту!');
+                navigate("/"); // Перехід на головну сторінку
+            } else {
+                setErrorMessage(data.message || 'Помилка нагадування пароля.');
+            }
+        } catch (error) {
+            setErrorMessage('Сервер недоступний. Спробуйте пізніше.');
         }
     };
+
 
     return (
         <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
@@ -63,28 +67,12 @@ const ForgotPasswordForm = () => {
                     </Form.Control.Feedback>
                 </Form.Group>
 
-                {/* Поле для вводу VIN */}
-                <Form.Group className="mb-3">
-                    <Form.Label>VIN код автомобіля</Form.Label>
-                    <Form.Control
-                        type="text"
-                        placeholder="Введіть VIN код"
-                        value={vin}
-                        onChange={(e) => validateVin(e.target.value)}
-                        isInvalid={!isVinValid && vin !== ""}
-                        isValid={isVinValid}
-                    />
-                    <Form.Control.Feedback type="invalid">
-                        VIN має містити 17 символів, останні 6 з яких — цифри.
-                    </Form.Control.Feedback>
-                </Form.Group>
-
                 {/* Кнопка отримання пароля */}
                 <Button
                     type="submit"
                     className="w-100"
                     variant="primary"
-                    disabled={!isEmailValid || !isVinValid}
+                    disabled={!isEmailValid}
                 >
                     Отримати пароль
                 </Button>

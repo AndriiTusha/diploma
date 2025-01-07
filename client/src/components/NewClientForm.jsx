@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Form, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom"; // Додаємо для переходу
 
-const RegisterForm = () => {
+const NewClientForm = () => {
     const [surname, setSurname] = useState("");
     const [name, setName] = useState("");
     const [patronymic, setPatronymic] = useState("");
@@ -231,4 +231,4 @@ const RegisterForm = () => {
     );
 };
 
-export default RegisterForm;
+export default NewClientForm;
