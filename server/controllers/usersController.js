@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import ApiError from '../error/ApiError.js';
-import { User } from '../models/models.js';
+import { User, Client, Vehicle } from '../models/models.js';
 import { sendVerificationEmail } from '../utils/email.js';
 import moment from "moment-timezone";
+import {sendPasswordReminderEmail} from "../utils/emailReminder.js";
 
 
 // Функція генерації 6-значного коду
@@ -111,6 +112,53 @@ class UsersController {
             });
 
             res.status(200).json({ message: 'Обліковий запис успішно підтверджено' });
+        } catch (error) {
+            next(ApiError.internalError(error.message));
+        }
+    }
+
+    async remindPassword(req, res, next) {
+        try {
+            const { email, vin } = req.body;
+
+            // Перевірка, чи надані всі дані
+            if (!email || !vin) {
+                return next(ApiError.badRequest('Email та VIN є обов\'язковими'));
+            }
+
+            // Пошук користувача за email
+            const user = await User.findOne({ where: { email } });
+            if (!user) {
+                return next(ApiError.badRequest('Користувача з таким email не знайдено'));
+            }
+
+            // Пошук клієнта, пов’язаного з email
+            const client = await Client.findOne({ where: { contact_email: email } });
+            if (!client) {
+                return next(ApiError.badRequest('Email не привязаний до жодного клієнта'));
+            }
+
+            // Пошук автомобіля за VIN, який належить цьому клієнту
+            const vehicle = await Vehicle.findOne({
+                where: { vin, client_id: client.id },
+            });
+            if (!vehicle) {
+                return next(ApiError.badRequest('VIN не привязаний до автомобіля цього клієнта'));
+            }
+
+            // Генерація нового пароля
+            const newPassword = Math.random().toString(36).slice(-8);
+
+            // Хешування нового пароля
+            const hashedPassword = await bcrypt.hash(newPassword, 5);
+
+            // Оновлення пароля в базі даних
+            await user.update({ password: hashedPassword });
+
+            // Відправка електронного листа з новим паролем
+            await sendPasswordReminderEmail(email, newPassword);
+
+            res.status(200).json({ message: 'Новий пароль надіслано на вашу електронну пошту' });
         } catch (error) {
             next(ApiError.internalError(error.message));
         }
