@@ -1,13 +1,15 @@
 /* eslint-disable */
-import React, { useState } from "react";
-import { Form, Button } from "react-bootstrap";
-import { useNavigate } from "react-router-dom"; // Імпортуємо useNavigate
+import React, {useState, useContext } from "react";
+import {Form, Button} from "react-bootstrap";
+import {useNavigate} from "react-router-dom"; // Імпортуємо useNavigate
+import { ClientsContext } from "../context/ClientsContext.js";
 
 const LoginForm = () => {
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
     const [isLoginValid, setIsLoginValid] = useState(false);
     const [isPasswordValid, setIsPasswordValid] = useState(false);
+    const { setClients } = useContext(ClientsContext); // Використовуємо контекст
     const navigate = useNavigate(); // Хук для навігації
 
     // Перевірка логіна
@@ -31,14 +33,40 @@ const LoginForm = () => {
         try {
             const response = await fetch('http://localhost:5000/api/users/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: login, password }),
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email: login, password}),
             });
 
             const data = await response.json();
             if (response.ok) {
-                localStorage.setItem('token', data.token);
-                navigate('/dashboard');
+                const token = data.token;
+                localStorage.setItem('token', token);
+                // Проведемо декодування токена, щоб отримати роль користувача
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const userRole = payload.role;
+
+                // Якщо роль Admin або Employee, виконуємо запит на отримання клієнтів
+                if (userRole === 'Admin' || userRole === 'Employee') {
+                    const clientsResponse = await fetch('http://localhost:5000/api/clients/getAllClients', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                    const clientsData = await clientsResponse.json();
+                    if (clientsResponse.ok) {
+                        console.log('Клієнти:', clientsData);
+                         // Передаємо дані до дашборду
+                        setClients(clientsData);
+                        navigate('/dashboard');
+                    } else {
+                        alert('Не вдалося отримати дані клієнтів: ' + clientsData.message);
+                    }
+                } else {
+                    // Якщо роль не Admin чи Employee, переходимо на іншу сторінку
+                    navigate('/user-home'); // Змінити на потрібний шлях
+                }
             } else {
                 alert(data.message);
             }
@@ -53,7 +81,7 @@ const LoginForm = () => {
         <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
             <Form
                 className="p-4 border rounded shadow bg-white"
-                style={{ width: "100%", maxWidth: "400px" }}
+                style={{width: "100%", maxWidth: "400px"}}
                 onSubmit={handleSubmit}
             >
                 <h3 className="text-center mb-4">Вхід до системи</h3>

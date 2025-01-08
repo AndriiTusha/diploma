@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom"; // Додаємо для пер�
 
 const ForgotPasswordForm = () => {
     const [email, setEmail] = useState("");
-    const [vin, setVin] = useState("");
     const [isEmailValid, setIsEmailValid] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const navigate = useNavigate(); // Хук для навігації
@@ -24,7 +23,7 @@ const ForgotPasswordForm = () => {
             const response = await fetch('http://localhost:5000/api/users/remind-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, vin }),
+                body: JSON.stringify({ email }),
             });
 
             const data = await response.json();

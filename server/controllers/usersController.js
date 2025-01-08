@@ -132,22 +132,8 @@ class UsersController {
                 return next(ApiError.badRequest('Користувача з таким email не знайдено'));
             }
 
-            // // Пошук клієнта, пов’язаного з email
-            // const client = await Client.findOne({ where: { contact_email: email } });
-            // if (!client) {
-            //     return next(ApiError.badRequest('Email не привязаний до жодного клієнта'));
-            // }
-            //
-            // // Пошук автомобіля за VIN, який належить цьому клієнту
-            // const vehicle = await Vehicle.findOne({
-            //     where: { vin, client_id: client.id },
-            // });
-            // if (!vehicle) {
-            //     return next(ApiError.badRequest('VIN не привязаний до автомобіля цього клієнта'));
-            // }
-
             // Генерація нового пароля
-            const newPassword = Math.random().toString(36).slice(-8);
+            const newPassword = Math.random().toString(36).slice(-10);
 
             // Хешування нового пароля
             const hashedPassword = await bcrypt.hash(newPassword, 5);

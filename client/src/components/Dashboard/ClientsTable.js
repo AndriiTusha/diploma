@@ -1,49 +1,45 @@
-/* eslint-disable */
-import React, { useEffect, useState } from 'react';
+import React, { useContext } from 'react';
+import { ClientsContext } from "../../context/ClientsContext.js";
 
 const ClientsTable = () => {
-    const [clients, setClients] = useState([]);
-
-    useEffect(() => {
-        const fetchClients = async () => {
-            try {
-                const response = await fetch('http://localhost:5000/api/clients', {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-                });
-                const data = await response.json();
-                setClients(data);
-            } catch (err) {
-                console.error('Failed to fetch clients:', err);
-            }
-        };
-
-        fetchClients();
-    }, []);
+    const { clients } = useContext(ClientsContext);
+    console.log('Clients data from ClientsTable: ', clients)
 
     return (
         <div>
             <h3>Клієнти</h3>
             <table className="table table-bordered">
                 <thead>
-                <tr className="text-center align-text-top">
+                <tr>
+                    <th>#</th>
                     <th>Ім'я</th>
-                    <th>По батькові</th>
+                    <th>По-батькові</th>
                     <th>Прізвище</th>
-                    <th>Контактний email</th>
-                    <th>Контактний телефон</th>
-                    <th>Історія обслуговувань</th>
-                    <th>Налаштування нагадувань</th>
+                    <th>Email</th>
+                    <th>Телефон</th>
+                    <th>Сервісна історія</th>
+                    <th>Нагадування</th>
                 </tr>
                 </thead>
                 <tbody>
-                {clients.map((client) => (
-                    <tr key={client.id}>
-                        <td>{client.name}</td>
-                        <td>{client.contact_info}</td>
-                        <td>{client.service_history}</td>
-                        <td>{JSON.stringify(client.reminders)}</td>
+                {clients.data.length > 0 ? (
+                    clients.data.map((client, index) => (
+                        <tr key={client.id}>
+                            <td>{index + 1}</td>
+                            <td>{client.name || 'Не вказано'}</td>
+                            <td>{client.middle_name || 'Не вказано'}</td>
+                            <td>{client.surname || 'Не вказано'}</td>
+                            <td>{client.contact_email || 'Не вказано'}</td>
+                            <td>{client.contact_phone || 'Не вказано'}</td>
+                            <td>{client.service_history || 'Не вказано'}</td>
+                            <td>{ JSON.stringify(client.reminders) || 'Не вказано'}</td>
+                        </tr>
+                    ))
+                ) : (
+                    <tr>
+                        <td colSpan="5" className="text-center">Немає даних</td>
                     </tr>
-                ))}
+                )}
                 </tbody>
             </table>
         </div>
