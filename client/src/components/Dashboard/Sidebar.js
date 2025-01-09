@@ -4,7 +4,7 @@ const Sidebar = ({ setActiveTab, activeTab }) => {
     const tabs = [
         { key: 'clients', label: 'Клієнти' },
         { key: 'vehicles', label: 'Транспорт' },
-        { key: 'services', label: 'Записи' },
+        // { key: 'services', label: 'Записи' },
         { key: 'payments', label: 'Платежі' },
     ];
 
