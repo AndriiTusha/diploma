@@ -46,16 +46,15 @@ class VehiclesController {
     }
     async getAllVehiclesForClient(req, res, next) {
         try {
-            const { clientId } = req.params;
-
+            const { clientID } = req.params;
             // Перевірка, чи є clientId в запиті
-            if (!clientId) {
+            if (!clientID) {
                 return next(ApiError.badRequest('Client ID is required'));
             }
 
             // Отримуємо автомобілі для клієнта
             const vehicles = await Vehicle.findAll({
-                where: { client_id: clientId },
+                where: { client_id: clientID },
             });
 
             // Якщо автомобілі не знайдені
