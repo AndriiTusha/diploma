@@ -93,6 +93,11 @@ class PaymentsController {
     async getAllPaymentsPerVehicle(req, res, next) {
         try {
             const { vehicle_id } = req.params;
+            // Перевірка існування автомобіля
+            const vehicle = await Vehicle.findByPk(vehicle_id);
+            if (!vehicle) {
+                return res.status(404).json({ message: `Автомобіль з ID ${vehicle_id} не знайдено.` });
+            }
             const payments = await Payment.findAll({ where: { vehicle_id } });
 
             if (!payments.length) {
@@ -104,6 +109,27 @@ class PaymentsController {
             next(ApiError.internalError('Failed to fetch payments for vehicle'));
         }
     }
+
+    async deletePayment(req, res, next) {
+        try {
+            const { paymentId } = req.params;
+
+            // Знайти платіж
+            const payment = await Payment.findByPk(paymentId);
+            if (!payment) {
+                return res.status(404).json({ message: "Платіж не знайдено" });
+            }
+
+            // Видалити платіж
+            await payment.destroy();
+
+            return res.status(200).json({ message: "Платіж успішно видалено" });
+        } catch (error) {
+            console.error("Помилка видалення платежу:", error);
+            return next(ApiError.internalError("Не вдалося видалити платіж"));
+        }
+    }
+
 }
 
 const paymentsController = new PaymentsController();

@@ -1,11 +1,11 @@
-import { Client } from '../models/models.js';
+import { Client, Vehicle, Payment } from '../models/models.js';
 import ApiError from "../error/ApiError.js";
 
 class ClientsController {
     // Створення нового клієнта
     async createClient(req, res, next) {
         try {
-            const { name, middle_name, surname, contact_email, contact_phone, service_history, reminders } = req.body;
+            const { name, middle_name, surname, contact_email, contact_phone, reminders } = req.body;
 
             if (!name || !surname || !contact_email || !contact_phone) {
                 return next(ApiError.badRequest('All required fields must be filled'));
@@ -29,8 +29,6 @@ class ClientsController {
                 surname,
                 contact_email,
                 contact_phone,
-                service_history,
-                reminders,
             });
 
             return res.status(201).json(client);
@@ -42,26 +40,21 @@ class ClientsController {
     // Отримання клієнта за ID
     async getOneClient(req, res, next) {
         try {
-            const { clientID } = req.params;
-            const userRole = req.user.role; // Роль із токена
-            const userEmail = req.user.email; // Email із токена
+            const { email } = req.params;
 
-            // Отримання клієнта за ID
-            const client = await Client.findByPk(clientID);
+            if (!email) {
+                return next(ApiError.badRequest('Email is required'));
+            }
+
+            const client = await Client.findOne({ where: { contact_email: email } });
 
             if (!client) {
                 return next(ApiError.badRequest('Client not found'));
             }
 
-            // Якщо роль Client, перевіряємо, чи збігається email
-            if (userRole === 'Client' && client.contact_email !== userEmail) {
-                return next(ApiError.forbidden('Access denied'));
-            }
-
-            // Якщо роль Admin або Employee, повертаємо клієнта
             return res.status(200).json(client);
         } catch (error) {
-            next(ApiError.internalError('Failed to fetch client'));
+            next(ApiError.internalError('Failed to fetch client by email'));
         }
     }
 
@@ -133,6 +126,36 @@ class ClientsController {
             next(ApiError.internalError('Failed to fetch clients with pagination'));
         }
     }
+
+    async deleteClient(req, res, next) {
+        try {
+            const { clientId } = req.params;
+
+            // Знайти клієнта
+            const client = await Client.findByPk(clientId);
+
+            if (!client) {
+                return res.status(404).json({ message: "Клієнт не знайдений" });
+            }
+
+            // Видалити всі автомобілі клієнта
+            const vehicles = await Vehicle.findAll({ where: { client_id: clientId } });
+            for (const vehicle of vehicles) {
+                // Видалити платежі для кожного автомобіля
+                await Payment.destroy({ where: { vehicle_id: vehicle.id } });
+                // Видалити автомобіль
+                await vehicle.destroy();
+            }
+
+            // Видалити клієнта
+            await client.destroy();
+
+            return res.status(200).json({ message: "Клієнта успішно видалено разом із пов'язаними даними" });
+        } catch (error) {
+            next(ApiError.internalError("Не вдалося видалити клієнта"));
+        }
+    }
+
 }
 
 const clientsController = new ClientsController();

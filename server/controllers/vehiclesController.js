@@ -1,4 +1,4 @@
-import {Vehicle} from '../models/models.js'
+import {Vehicle, Payment} from '../models/models.js'
 import ApiError from "../error/ApiError.js";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
@@ -9,23 +9,38 @@ const __dirname = path.dirname(__filename);
 class VehiclesController {
     async createVehicle(req, res, next) {
         try {
-            const { vin, mark, model, year, miles, diagnostics_history, repair_history, maintenance_history, client_id } = req.body;
+            const {
+                vin,
+                mark,
+                model,
+                year,
+                miles,
+                diagnostics_history,
+                repair_history,
+                maintenance_history,
+                client_id,
+            } = req.body;
 
-            if (!req.files || !req.files.img) {
-                return next(ApiError.badRequest("Image file is required"));
+            let fileName = null; // За замовчуванням зображення немає
+
+            // Перевіряємо, чи є файли у запиті
+            if (req.files && req.files.img) {
+                const { img } = req.files;
+
+                // Перевіряємо, чи файл є зображенням
+                if (!img.mimetype.startsWith("image/")) {
+                    return next(ApiError.badRequest("Invalid file type. Only image files are allowed."));
+                }
+
+                // Генеруємо унікальну назву для файлу
+                fileName = uuidv4() + path.extname(img.name);
+                const uploadPath = path.resolve(__dirname, "../uploads/vehicles");
+
+                // Зберігаємо файл
+                await img.mv(path.join(uploadPath, fileName));
             }
 
-            const { img } = req.files;
-
-            if (!img.mimetype.startsWith("image/")) {
-                return next(ApiError.badRequest("Invalid file type. Only image files are allowed."));
-            }
-
-            let fileName = uuidv4() + path.extname(img.name);
-            const uploadPath = path.resolve(__dirname, "../uploads/vehicles");
-
-            await img.mv(path.join(uploadPath, fileName));
-
+            // Створюємо автомобіль
             const vehicle = await Vehicle.create({
                 vin,
                 mark,
@@ -36,7 +51,7 @@ class VehiclesController {
                 repair_history,
                 maintenance_history,
                 client_id,
-                img: `uploads/vehicles/${fileName}`,
+                img: fileName ? `uploads/vehicles/${fileName}` : null, // Якщо немає зображення, ставимо null
             });
 
             return res.json(vehicle);
@@ -44,6 +59,45 @@ class VehiclesController {
             next(ApiError.badRequest(e.message));
         }
     }
+
+
+    async updateVehiclePhoto(req, res, next) {
+        try {
+            const { vehicleID } = req.params;
+
+            // Перевірка наявності файлу
+            if (!req.files || !req.files.img) {
+                return next(ApiError.badRequest('Image file is required'));
+            }
+
+            const { img } = req.files;
+
+            // Перевірка типу файлу
+            if (!img.mimetype.startsWith('image/')) {
+                return next(ApiError.badRequest('Invalid file type. Only image files are allowed.'));
+            }
+
+            // Генерація унікальної назви для файлу
+            const fileName = uuidv4() + path.extname(img.name);
+            const uploadPath = path.resolve(__dirname, '../uploads/vehicles');
+
+            // Збереження файлу
+            await img.mv(path.join(uploadPath, fileName));
+
+            // Оновлення запису в базі даних
+            const vehicle = await Vehicle.findByPk(vehicleID);
+            if (!vehicle) {
+                return next(ApiError.badRequest('Vehicle not found'));
+            }
+
+            await vehicle.update({ img: `uploads/vehicles/${fileName}` });
+
+            res.status(200).json({ message: 'Photo updated successfully', img: `uploads/vehicles/${fileName}` });
+        } catch (error) {
+            next(ApiError.internalError('Failed to update vehicle photo'));
+        }
+    }
+
     async getAllVehiclesForClient(req, res, next) {
         try {
             const { clientID } = req.params;
@@ -69,6 +123,30 @@ class VehiclesController {
             next(ApiError.internalError('Failed to fetch vehicles for client'));
         }
     }
+
+    async deleteVehicle(req, res, next) {
+        try {
+            const { vehicleId } = req.params;
+
+            // Знайти автомобіль
+            const vehicle = await Vehicle.findByPk(vehicleId);
+            if (!vehicle) {
+                return res.status(404).json({ message: "Автомобіль не знайдено" });
+            }
+
+            // Видалити всі платежі, пов'язані з автомобілем
+            await Payment.destroy({ where: { vehicle_id: vehicleId } });
+
+            // Видалити автомобіль
+            await vehicle.destroy();
+
+            return res.status(200).json({ message: "Автомобіль успішно видалено разом із пов'язаними платежами" });
+        } catch (error) {
+            console.error("Помилка видалення автомобіля:", error);
+            return next(ApiError.internalError("Не вдалося видалити автомобіль"));
+        }
+    }
+
 
     async editVehicle(req, res, next) {
         try {

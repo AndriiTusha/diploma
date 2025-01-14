@@ -36,6 +36,7 @@ export const Vehicle = sequelize.define('vehicle', {
     diagnostics_history: { type: DataTypes.TEXT },
     repair_history: { type: DataTypes.TEXT },
     maintenance_history: { type: DataTypes.TEXT },
+    img: { type: DataTypes.STRING, allowNull: true }, // Поле для зберігання шляху до фото
     client_id: { // Додаємо явно зовнішній ключ
         type: DataTypes.INTEGER,
         allowNull: false, // Клієнт обов'язковий для авто

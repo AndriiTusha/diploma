@@ -9,12 +9,15 @@ const router = Router();
 router.post('/createClient', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.createClient);
 
 // Отримання клієнта за ID (Admin, Employee, Client)
-router.get('/getOneClient/:clientID', authMiddleware, clientsController.getOneClient);
+router.get('/getOneClient/:email', authMiddleware, clientsController.getOneClient);
 
 // Отримання всіх клієнтів (Admin або Employee)
 router.get('/getAllClients', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.getAllClients);
 
 // Редагування клієнта (Admin або Employee)
 router.put('/editClient/:clientID', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.editClient);
+
+router.delete('/deleteClient/:clientId', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.deleteClient);
+
 
 export default router;

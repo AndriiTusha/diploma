@@ -173,8 +173,22 @@ class UsersController {
                 return next(ApiError.badRequest('Invalid password'));
             }
 
+            // Якщо роль клієнта, шукаємо клієнта за email
+            let clientData = null;
+            if (user.role === 'Client') {
+                clientData = await Client.findOne({ where: { contact_email: email } });
+                if (!clientData) {
+                    return next(ApiError.badRequest('Client record not found'));
+                }
+            }
+
             const token = jwt.sign(
-                { id: user.id, email: user.email, role: user.role },
+                {
+                    id: user.id,
+                    email: user.email,
+                    role: user.role,
+                    clientId: clientData ? clientData.id : null, // Додаємо ID клієнта для ролі Client
+                },
                 process.env.SECRET_KEY,
                 { expiresIn: '24h' }
             );

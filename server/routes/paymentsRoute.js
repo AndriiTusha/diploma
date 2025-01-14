@@ -1,6 +1,8 @@
 import { Router } from 'express';
 const router = Router();
 import paymentsController from "../controllers/paymentsController.js";
+import {authMiddleware} from "../middleware/authMiddleware.js";
+import {checkRole} from "../middleware/checkRole.js";
 
 // Створення нового платежу
 router.post('/createPayment/:vehicle_id', paymentsController.createPayment);
@@ -13,5 +15,8 @@ router.get('/getAllPaymentsForClient/:client_id', paymentsController.getAllPayme
 
 // Отримання всіх платежів для транспортного засобу
 router.get('/getAllPaymentsPerVehicle/:vehicle_id', paymentsController.getAllPaymentsPerVehicle);
+
+router.delete('/deletePayment/:paymentId', authMiddleware, checkRole(['Admin', 'Employee']), paymentsController.deletePayment);
+
 
 export default router;
