@@ -66,7 +66,7 @@ const NewUserForm = () => {
             const data = await response.json();
             if (response.ok) {
                 alert("Ваш обліковий запис успішно підтверджено!");
-                navigate("/dashboard"); // Перехід до сторінки логіну
+                navigate("/login"); // Перехід до сторінки логіну
             } else {
                 setErrorMessage(data.message || "Помилка верифікації.");
             }

@@ -44,6 +44,8 @@ const LoginForm = () => {
                 // Проведемо декодування токена, щоб отримати роль користувача
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const userRole = payload.role;
+                const clientEmail = payload.email;
+                console.log('Payload here: ' , payload);
 
                 // Якщо роль Admin або Employee, виконуємо запит на отримання клієнтів
                 if (userRole === 'Admin' || userRole === 'Employee') {
@@ -56,16 +58,29 @@ const LoginForm = () => {
                     });
                     const clientsData = await clientsResponse.json();
                     if (clientsResponse.ok) {
-                        console.log('Клієнти:', clientsData);
                          // Передаємо дані до дашборду
                         setClients(clientsData);
                         navigate('/dashboard');
                     } else {
                         alert('Не вдалося отримати дані клієнтів: ' + clientsData.message);
                     }
-                } else {
-                    // Якщо роль не Admin чи Employee, переходимо на іншу сторінку
-                    navigate('/user-home'); // Змінити на потрібний шлях
+                }
+                if (userRole === 'Client') {
+                    const clientsResponse = await fetch(`http://localhost:5000/api/clients/getOneClient/${clientEmail}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                    const clientsData = await clientsResponse.json();
+                    if (clientsResponse.ok) {
+                        // Передаємо дані до дашборду
+                        setClients(clientsData);
+                        navigate('/dashboard');
+                    } else {
+                        alert('Не вдалося отримати дані клієнта: ' + clientsData.message);
+                    }
                 }
             } else {
                 alert(data.message);

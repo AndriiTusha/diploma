@@ -9,7 +9,6 @@ const NewClientForm = () => {
     const [patronymic, setPatronymic] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("+38");
-    const [vin, setVin] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [isPhoneValid, setIsPhoneValid] = useState(false); // Додаємо стан для перевірки номера телефону
 
@@ -71,27 +70,54 @@ const NewClientForm = () => {
         const nameValid = name.match(cyrillicPattern);
         const patronymicValid = patronymic.match(cyrillicPattern);
         const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        const vinValid = /^[A-HJ-NPR-Z0-9]{11}[0-9]{6}$/.test(vin);
+       // const vinValid = /^[A-HJ-NPR-Z0-9]{11}[0-9]{6}$/.test(vin);
 
         if (!surnameValid) return "Прізвище має містити тільки кирилицю.";
         if (!nameValid) return "Ім'я має містити тільки кирилицю.";
         if (!patronymicValid) return "По батькові має містити тільки кирилицю.";
         if (!emailValid) return "Введіть коректний email.";
         if (!validatePhone(phone)) return "Введіть коректний номер телефону.";
-        if (!vinValid) return "VIN має складатися з 17 символів, останні 6 з яких — цифри.";
+       // if (!vinValid) return "VIN має складатися з 17 символів, останні 6 з яких — цифри.";
 
         return "";
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const error = validateFields();
         if (error) {
             setErrorMessage(error);
         } else {
             setErrorMessage("");
-            alert("Реєстрація успішна!");
             // Логіка для відправлення даних до бази даних
+            const clientData = {
+                name,
+                middle_name: patronymic,
+                surname,
+                contact_email: email,
+                contact_phone: phone,
+            };
+
+            try {
+                const response = await fetch("http://localhost:5000/api/clients/createClient", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`, // Додаємо токен
+                    },
+                    body: JSON.stringify(clientData),
+                });
+
+                if (response.ok) {
+                    alert("Клієнт успішно створений!");
+                    navigate("/dashboard");
+                } else {
+                    const data = await response.json();
+                    setErrorMessage(data.message || "Не вдалося створити клієнта.");
+                }
+            } catch (err) {
+                setErrorMessage("Сервер недоступний.");
+            }
         }
     };
 
@@ -102,7 +128,7 @@ const NewClientForm = () => {
                 style={{ width: "100%", maxWidth: "400px" }}
                 onSubmit={handleSubmit}
             >
-                <h3 className="text-center mb-4">Реєстрація користувача</h3>
+                <h3 className="text-center mb-4">Реєстрація нового клієнта</h3>
 
                 {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
 
@@ -164,7 +190,7 @@ const NewClientForm = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                    <Form.Label>Ваш e-mail</Form.Label>
+                    <Form.Label>E-mail</Form.Label>
                     <Form.Control
                         type="email"
                         placeholder="example@mail.com"
@@ -198,23 +224,23 @@ const NewClientForm = () => {
                     </Form.Control.Feedback>
                 </Form.Group>
 
-                <Form.Group className="mb-3">
-                    <Form.Label>VIN код</Form.Label>
-                    <Form.Control
-                        type="text"
-                        value={vin}
-                        onChange={(e) => setVin(e.target.value)}
-                        maxLength={17}
-                        isInvalid={vin && !/^[A-HJ-NPR-Z0-9]{11}[0-9]{6}$/.test(vin)}
-                        isValid={vin && /^[A-HJ-NPR-Z0-9]{11}[0-9]{6}$/.test(vin)}
-                    />
-                    <Form.Control.Feedback type="invalid">
-                        VIN має складатися з 17 символів, останні 6 з яких — цифри.
-                    </Form.Control.Feedback>
-                    <Form.Control.Feedback type="valid">
-                        <i className="fas fa-check-circle" style={{ color: "green" }}></i>
-                    </Form.Control.Feedback>
-                </Form.Group>
+                {/*<Form.Group className="mb-3">*/}
+                {/*    <Form.Label>VIN код</Form.Label>*/}
+                {/*    <Form.Control*/}
+                {/*        type="text"*/}
+                {/*        value={vin}*/}
+                {/*        onChange={(e) => setVin(e.target.value)}*/}
+                {/*        maxLength={17}*/}
+                {/*        isInvalid={vin && !/^[A-HJ-NPR-Z0-9]{11}[0-9]{6}$/.test(vin)}*/}
+                {/*        isValid={vin && /^[A-HJ-NPR-Z0-9]{11}[0-9]{6}$/.test(vin)}*/}
+                {/*    />*/}
+                {/*    <Form.Control.Feedback type="invalid">*/}
+                {/*        VIN має складатися з 17 символів, останні 6 з яких — цифри.*/}
+                {/*    </Form.Control.Feedback>*/}
+                {/*    <Form.Control.Feedback type="valid">*/}
+                {/*        <i className="fas fa-check-circle" style={{ color: "green" }}></i>*/}
+                {/*    </Form.Control.Feedback>*/}
+                {/*</Form.Group>*/}
 
                 <Button variant="primary" type="submit" className="w-100">
                     Зареєструватися
@@ -222,7 +248,7 @@ const NewClientForm = () => {
                 <Button
                     variant="secondary"
                     className="w-100 my-2"
-                    onClick={() => navigate("/login")}
+                    onClick={() => navigate("/dashboard")}
                 >
                     Повернутися
                 </Button>
