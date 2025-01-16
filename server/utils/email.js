@@ -21,3 +21,24 @@ export const sendVerificationEmail = async (email, code) => {
 
     await transporter.sendMail(mailOptions);
 };
+
+export const sendReminderEmail = async (email, subject, text) => {
+    const transporter = nodemailer.createTransport({
+        host: 'smtp.ukr.net', // SMTP-сервер
+        port: 465, // Порт
+        secure: true, // Використання SSL
+        auth: {
+            user: process.env.SERVER_EMAIL, // Ваша серверна електронна пошта
+            pass: process.env.SERVER_PASS, // Пароль або App Password
+        },
+    });
+
+    const mailOptions = {
+        from: `"AutoService" <${process.env.SERVER_EMAIL}>`,
+        to: email,
+        subject: subject,
+        text: text,
+    };
+
+    await transporter.sendMail(mailOptions);
+};

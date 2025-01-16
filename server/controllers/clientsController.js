@@ -1,5 +1,6 @@
 import { Client, Vehicle, Payment } from '../models/models.js';
 import ApiError from "../error/ApiError.js";
+import {checkAndSendReminders} from "../utils/emailReminder.js";
 
 class ClientsController {
     // Створення нового клієнта
@@ -153,6 +154,58 @@ class ClientsController {
             return res.status(200).json({ message: "Клієнта успішно видалено разом із пов'язаними даними" });
         } catch (error) {
             next(ApiError.internalError("Не вдалося видалити клієнта"));
+        }
+    };
+
+    //додавання нагадувань
+    async setReminder(req, res, next) {
+        try {
+            const { clientId } = req.params;
+            const { text, date } = req.body;
+
+            const client = await Client.findByPk(clientId);
+            if (!client) {
+                return res.status(404).json({ message: "Клієнт не знайдений" });
+            }
+
+            client.reminders = { remind: true, text, date };
+            await client.save();
+
+            return res.status(200).json({ message: "Нагадування збережено успішно" });
+        } catch (error) {
+            console.error("Помилка збереження нагадування:", error);
+            next(ApiError.internalError("Не вдалося зберегти нагадування"));
+        }
+    }
+
+    //видалення нагадувань
+    async removeReminder(req, res, next) {
+        try {
+            const { clientId } = req.params;
+
+            const client = await Client.findByPk(clientId);
+            if (!client) {
+                return res.status(404).json({ message: "Клієнт не знайдений" });
+            }
+
+            client.reminders = null; // Видаляємо нагадування
+            await client.save();
+
+            return res.status(200).json({ message: "Нагадування успішно видалено" });
+        } catch (error) {
+            console.error("Помилка видалення нагадування:", error);
+            next(ApiError.internalError("Не вдалося видалити нагадування"));
+        }
+    }
+
+    //тестування відправлення нагадувань
+    async sendRemindersManually(req, res, next) {
+        try {
+            await checkAndSendReminders(); // Викликаємо функцію перевірки
+            return res.status(200).json({ message: "Нагадування успішно відправлено вручну" });
+        } catch (error) {
+            console.error("Помилка під час відправки нагадувань:", error);
+            next(ApiError.internalError("Не вдалося відправити нагадування"));
         }
     }
 

@@ -14,10 +14,17 @@ router.get('/getOneClient/:email', authMiddleware, clientsController.getOneClien
 // Отримання всіх клієнтів (Admin або Employee)
 router.get('/getAllClients', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.getAllClients);
 
-// Редагування клієнта (Admin або Employee)
-router.put('/editClient/:clientID', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.editClient);
+// Редагування клієнта (Admin)
+router.put('/editClient/:clientID', authMiddleware, checkRole(['Admin']), clientsController.editClient);
 
-router.delete('/deleteClient/:clientId', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.deleteClient);
+router.delete('/deleteClient/:clientId', authMiddleware, checkRole(['Admin']), clientsController.deleteClient);
+
+router.put('/setReminder/:clientId', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.setReminder);
+
+router.delete('/removeReminder/:clientId', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.removeReminder);
+
+router.post('/sendReminders', authMiddleware, checkRole(['Admin', 'Employee']), clientsController.sendRemindersManually);
+
 
 
 export default router;

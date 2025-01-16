@@ -3,6 +3,7 @@ import ApiError from "../error/ApiError.js";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
 import path from "path";
+import {connectToOBD, getDiagnosticCodes} from "../utils/obdService.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -202,6 +203,35 @@ class VehiclesController {
             next(ApiError.internalError('Failed to fetch vehicles with pagination'));
         }
     }
+
+    async readErrors (req, res, next) {
+        try {
+            const { vehicleId } = req.params;
+
+            // Підключення до OBD-II адаптера
+            await connectToOBD();
+
+            // Отримання кодів помилок
+            const errors = await getDiagnosticCodes();
+
+            // Збереження кодів у базу даних
+            const vehicle = await Vehicle.findByPk(vehicleId);
+            if (!vehicle) {
+                return res.status(404).json({ message: 'Автомобіль не знайдено' });
+            }
+
+            vehicle.diagnostics_history = [...(vehicle.diagnostics_history || []), {
+                timestamp: new Date().toISOString(),
+                errors: errors,
+            }];
+            await vehicle.save();
+
+            res.status(200).json({ message: 'Коди помилок зчитано успішно', errors });
+        } catch (error) {
+            console.error('Помилка зчитування кодів:', error);
+            next(error);
+        }
+    };
 }
 
 const vehiclesController = new VehiclesController();
