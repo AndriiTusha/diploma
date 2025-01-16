@@ -133,7 +133,7 @@ const PaymentsTable = ({ vehicleId }) => {
                                 className="btn btn-warning btn-sm"
                                 onClick={() => openEditModal(payment)}
                             >
-                                Редагувати
+                                &#9998;
                             </button>
                         </td>
                         <td>{index + 1}</td>

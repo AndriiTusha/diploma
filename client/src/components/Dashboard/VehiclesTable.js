@@ -139,6 +139,28 @@ const VehiclesTable = ({clientId, setActiveTab, setSelectedVehicleId }) => {
         }
     };
 
+    const handleReadErrors = async (vehicleId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/vehicles/readErrors/${vehicleId}`, {
+                method: "GET",
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert("Коди помилок зчитано успішно");
+                console.log("Отримані помилки:", data.errors);
+            } else {
+                const errorData = await response.json();
+                alert(errorData.message || "Не вдалося зчитати помилки");
+            }
+        } catch (error) {
+            console.error("Помилка зчитування помилок:", error);
+            alert("Сталася помилка при зчитуванні кодів помилок.");
+        }
+    };
+
+
 
     return (
         <div>
@@ -159,13 +181,14 @@ const VehiclesTable = ({clientId, setActiveTab, setSelectedVehicleId }) => {
                     <th>Історія техобслуговування</th>
                     <th>Пов'язані платежі</th>
                     <th>Фотографії авто</th>
+                    <th>Оберіть файл для завантаження</th>
                 </tr>
                 </thead>
                 <tbody>
                 {vehicles.length > 0 ? (
                     vehicles.map((vehicle, index) => (
                     <tr key={vehicle.id}>
-                        <td>
+                        <td className="text-center align-middle">
                             <button
                                 className="btn btn-danger btn-sm"
                                 onClick={() => handleDeleteVehicle(vehicle.id)}
@@ -173,12 +196,12 @@ const VehiclesTable = ({clientId, setActiveTab, setSelectedVehicleId }) => {
                                 X
                             </button>
                         </td>
-                        <td>
+                        <td className="text-center align-middle">
                             <button
                                 className="btn btn-warning btn-sm"
                                 onClick={() => openEditModal(vehicle)}
                             >
-                                Редагувати
+                                &#9998;
                             </button>
                         </td>
                         <td>{index + 1}</td>
@@ -187,7 +210,14 @@ const VehiclesTable = ({clientId, setActiveTab, setSelectedVehicleId }) => {
                         <td>{vehicle.model}</td>
                         <td>{vehicle.year}</td>
                         <td>{vehicle.miles}</td>
-                        <td>{vehicle.diagnostics_history}</td>
+                        <td className="text-center align-middle">
+                            <button
+                                className="btn btn-info btn-sm"
+                                onClick={() => handleReadErrors(vehicle.id)}
+                            >
+                                &#8634;
+                            </button>
+                        </td>
                         <td>{vehicle.repair_history}</td>
                         <td>{vehicle.maintenance_history}</td>
                         <td>

@@ -34,33 +34,61 @@ const ClientsTable = ({ setActiveTab, setSelectedClientId, userRole }) => {
         }
     };
 
-    const handleCheckboxChange = (clientId) => {
+    const handleCheckboxChange = async (clientId, checked) => {
         setReminders((prev) => ({
             ...prev,
-            [clientId]: {
-                ...prev[clientId],
-                remind: !prev[clientId]?.remind, // Змінюємо статус нагадування
-            },
+            [clientId]: { ...prev[clientId], remind: checked },
         }));
+
+        if (!checked) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/clients/removeReminder/${clientId}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
+
+                if (response.ok) {
+                    alert("Нагадування успішно видалено");
+                } else {
+                    alert("Не вдалося видалити нагадування");
+                }
+            } catch (error) {
+                console.error("Помилка видалення нагадування:", error);
+            }
+        }
     };
 
-    const handleDateChange = (clientId, date) => {
-        setReminders((prev) => ({
-            ...prev,
-            [clientId]: {
-                ...prev[clientId],
-                date,
-            },
-        }));
+    const handleReminderSave = async (clientId) => {
+        const reminderData = reminders[clientId];
+
+        if (!reminderData.text || !reminderData.date) return; // Перевірка на заповнення
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/clients/setReminder/${clientId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                body: JSON.stringify(reminderData),
+            });
+
+            if (response.ok) {
+                alert("Нагадування успішно збережено");
+            } else {
+                alert("Не вдалося зберегти нагадування");
+            }
+        } catch (error) {
+            console.error("Помилка збереження нагадування:", error);
+        }
     };
 
-    const handleDetailsChange = (clientId, details) => {
+    const handleFieldChange = (clientId, field, value) => {
         setReminders((prev) => ({
             ...prev,
-            [clientId]: {
-                ...prev[clientId],
-                details,
-            },
+            [clientId]: { ...prev[clientId], [field]: value },
         }));
     };
 
@@ -146,7 +174,7 @@ const ClientsTable = ({ setActiveTab, setSelectedClientId, userRole }) => {
                     clients.data.length > 0 ? (
                         clients.data.map((client, index) => (
                             <tr key={client.id}>
-                                <td>
+                                <td className="text-center align-middle">
                                     <button
                                         className="btn btn-danger btn-sm"
                                         onClick={() => handleDelete(client.id)}
@@ -154,12 +182,12 @@ const ClientsTable = ({ setActiveTab, setSelectedClientId, userRole }) => {
                                         Х
                                     </button>
                                 </td>
-                                <td>
+                                <td className="text-center align-middle">
                                     <button
                                         className="btn btn-warning btn-sm"
                                         onClick={() => openEditModal(client)}
                                     >
-                                        Редагувати
+                                        &#9998;
                                     </button>
                                 </td>
                                 <td>{index + 1}</td>
@@ -180,41 +208,25 @@ const ClientsTable = ({ setActiveTab, setSelectedClientId, userRole }) => {
                                     </button>
                                 </td>
                                 <td>
-                                    {/* Чекбокс "Нагадати" */}
-                                    <div>
-                                        <input
-                                            type="checkbox"
-                                            checked={reminders[client.id]?.remind || false}
-                                            onChange={() => handleCheckboxChange(client.id)}
-                                        />
-                                        <label style={{ marginLeft: '8px' }}>Нагадати</label>
-                                    </div>
-
-                                    {/* Поле "На дату" */}
+                                    <input
+                                        type="checkbox"
+                                        checked={reminders[client.id]?.remind || false}
+                                        onChange={(e) => handleCheckboxChange(client.id, e.target.checked)}
+                                    />
                                     {reminders[client.id]?.remind && (
-                                        <div style={{ marginTop: '8px' }}>
+                                        <>
                                             <input
                                                 type="date"
-                                                value={reminders[client.id]?.date || ''}
-                                                onChange={(e) =>
-                                                    handleDateChange(client.id, e.target.value)
-                                                }
+                                                value={reminders[client.id]?.date || ""}
+                                                onChange={(e) => handleFieldChange(client.id, "date", e.target.value)}
                                             />
-                                        </div>
-                                    )}
-
-                                    {/* Поле "Деталі" */}
-                                    {reminders[client.id]?.remind && (
-                                        <div style={{ marginTop: '8px' }}>
-                                            <input
-                                                type="text"
-                                                placeholder="Деталі"
-                                                value={reminders[client.id]?.details || ''}
-                                                onChange={(e) =>
-                                                    handleDetailsChange(client.id, e.target.value)
-                                                }
+                                            <textarea
+                                                placeholder="Текст нагадування"
+                                                value={reminders[client.id]?.text || ""}
+                                                onChange={(e) => handleFieldChange(client.id, "text", e.target.value)}
+                                                onBlur={() => handleReminderSave(client.id)} // Збереження після втрати фокусу
                                             />
-                                        </div>
+                                        </>
                                     )}
                                 </td>
                             </tr>
@@ -242,44 +254,6 @@ const ClientsTable = ({ setActiveTab, setSelectedClientId, userRole }) => {
                             >
                                 Транспорт
                             </button>
-                        </td>
-                        <td>
-                            {/* Чекбокс "Нагадати" */}
-                            <div>
-                                <input
-                                    type="checkbox"
-                                    checked={reminders[clients.id]?.remind || false}
-                                    onChange={() => handleCheckboxChange(clients.id)}
-                                />
-                                <label style={{ marginLeft: '8px' }}>Нагадати</label>
-                            </div>
-
-                            {/* Поле "На дату" */}
-                            {reminders[clients.id]?.remind && (
-                                <div style={{ marginTop: '8px' }}>
-                                    <input
-                                        type="date"
-                                        value={reminders[clients.id]?.date || ''}
-                                        onChange={(e) =>
-                                            handleDateChange(clients.id, e.target.value)
-                                        }
-                                    />
-                                </div>
-                            )}
-
-                            {/* Поле "Деталі" */}
-                            {reminders[clients.id]?.remind && (
-                                <div style={{ marginTop: '8px' }}>
-                                    <input
-                                        type="text"
-                                        placeholder="Деталі"
-                                        value={reminders[clients.id]?.details || ''}
-                                        onChange={(e) =>
-                                            handleDetailsChange(clients.id, e.target.value)
-                                        }
-                                    />
-                                </div>
-                            )}
                         </td>
                     </tr>
                 ) : (
