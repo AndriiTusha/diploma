@@ -207,7 +207,7 @@ const ClientsTable = ({ setActiveTab, setSelectedClientId, userRole }) => {
                                         Транспорт
                                     </button>
                                 </td>
-                                <td>
+                                <td className="d-flex flex-column gap-1">
                                     <input
                                         type="checkbox"
                                         checked={reminders[client.id]?.remind || false}
