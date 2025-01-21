@@ -24,7 +24,7 @@
   },
   "scripts": {
     "start": "serve -s build",
-    "build": "react-scripts --openssl-legacy-provider build",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@babel/plugin-proposal-private-property-in-object": "^7.24.0",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.26.3",
     "web-vitals": "^4.2.4"
