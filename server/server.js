@@ -11,19 +11,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import { initializeDefaultUsers } from './utils/initializeUsers.js';
 
-const PORT = process.env.PORT || 5000;
 const app = express();
+const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 app.use(fileUpload({}));
 app.use('/api', router);
-// Обслуговування статичних файлів React
-app.use(express.static(path.join(__dirname, '../client/build')));
 
-// Віддача frontend на всі запити
+// Додаємо middleware для роздачі статичних файлів
+app.use(express.static(path.join(__dirname, 'client', 'build')));
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
 });
 
 app.use(errorHandler)
