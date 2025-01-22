@@ -2,4 +2,6 @@ node_modules/
 client/node_modules
 client/build
 server/.env
+client/diploma-client/
+
 

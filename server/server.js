@@ -18,11 +18,18 @@ app.use(express.json());
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 app.use(fileUpload({}));
 app.use('/api', router);
+// Обслуговування статичних файлів React
+app.use(express.static(path.join(__dirname, '../client/build')));
+
+// Віддача frontend на всі запити
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
 
 app.use(errorHandler)
 
 app.get("/", (req, res) =>
-{res.status(200).json({message:"Working!!!"})})
+{res.status(200).json({message:"Server Working!!!"})})
 
 
 const start = async () => {

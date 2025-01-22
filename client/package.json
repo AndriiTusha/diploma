@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://diploma-client.herokuapp.com",
+  "homepage": ".",
   "dependencies": {
     "axios": "^1.7.9",
     "serve": "^14.0.1",
