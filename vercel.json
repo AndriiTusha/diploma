@@ -2,7 +2,7 @@
   "build": {
     "env": {
       "NODE_ENV": "production",
-      "DATABASE_URL": "@your-database-url"
+      "DATABASE_URL": "postgresql://postgres:F2Ap126U63YmNTCM@db.tzqsmxiuwaxihwpalwnx.supabase.co:5432/postgres"
     }
   },
   "rewrites": [
