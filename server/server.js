@@ -30,6 +30,16 @@ app.use(errorHandler)
 app.get("/", (req, res) =>
 {res.status(200).json({message:"Server Working!!!"})})
 
+// Проверка подключения к Supabase
+// app.get('/api/users', async (req, res) => {
+//     try {
+//         const { data, error } = await supabase.from('users').select('*');
+//         if (error) throw error;
+//         res.status(200).json(data);
+//     } catch (err) {
+//         res.status(500).json({ message: 'Ошибка подключения к базе данных', error: err.message });
+//     }
+// });
 
 const start = async () => {
     try {
