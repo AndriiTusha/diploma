@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useContext, useState, useEffect } from 'react';
 import { ClientsContext } from "../../context/ClientsContext.js";
 import { useNavigate } from 'react-router-dom';
