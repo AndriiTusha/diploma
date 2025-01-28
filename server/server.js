@@ -14,32 +14,28 @@ import { initializeDefaultUsers } from './utils/initializeUsers.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors());
+// Дозволяємо серверу роздавати файли з клієнта
+app.use(express.static(path.join(__dirname, "../client/public")));
 app.use(express.json());
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 app.use(fileUpload({}));
 app.use('/api', router);
 
-// Додаємо middleware для роздачі статичних файлів
-app.use(express.static(path.join(__dirname, 'client', 'build')));
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+// Всі інші запити віддають `index.html`
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../client/public", "index.html"));
 });
+
+// Додаємо middleware для роздачі статичних файлів
+// app.use(express.static(path.join(__dirname, 'client', 'build')));
+// app.get('*', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+// });
 
 app.use(errorHandler)
 
 app.get("/", (req, res) =>
 {res.status(200).json({message:"Server Working!!!"})})
-
-// Проверка подключения к Supabase
-// app.get('/api/users', async (req, res) => {
-//     try {
-//         const { data, error } = await supabase.from('users').select('*');
-//         if (error) throw error;
-//         res.status(200).json(data);
-//     } catch (err) {
-//         res.status(500).json({ message: 'Ошибка подключения к базе данных', error: err.message });
-//     }
-// });
 
 const start = async () => {
     try {

@@ -7,9 +7,7 @@
     "npm": "9.x"
   },
   "scripts": {
-    "start": "concurrently \"npm start --prefix server\" \"npm start --prefix client\"",
-    "build": "set CI=false && npm run build --prefix client",
-    "vercel-build": "npm install --prefix client && npm run build --prefix client"
+    "start": "node server/server.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.48.0",
